@@ -11,14 +11,42 @@ terraform {
   }
 }
 
-provider "digitalocean" {}
-
-resource "digitalocean_database_cluster" "mongodb-installed-with-terraform" {
-  name       = "example-mongo-cluster"
-  engine     = "mongodb"
-  version    = "4"
-  size       = "db-s-1vcpu-1gb"
-  region     = "nyc3"
-  node_count = 3
+provider "digitalocean" {
+  token = var.do_token
 }
 
+variable "do_token" {
+  description = "DigitalOcean API token"
+}
+
+resource "digitalocean_droplet" "mongo" {
+  count = 3
+  image = "almalinux-8-x64"
+  name  = "mongo-${count.index + 1}"
+  region = "nyc3"
+  size   = "s-1vcpu-1gb"
+  ssh_keys = [var.ssh_key_fingerprint]
+
+  tags = ["mongodb"]
+}
+
+variable "ssh_key_fingerprint" {
+  description = "SSH key fingerprint for the droplets"
+}
+
+output "mongo_ips" {
+  value = digitalocean_droplet.mongo.*.ipv4_address
+}
+
+
+resource "local_file" "ansible_inventory" {
+  content = <<-EOT
+    [droplets]
+    %{ for droplet in digitalocean_droplet.mongo.* ~}
+    ${droplet.name} ansible_host=${droplet.ipv4_address} ansible_user=root ansible_ssh_private_key_file=/root/.ssh/id_rsa
+    %{ endfor ~}
+  EOT
+
+  filename = "${path.module}/inventory.ini"
+  depends_on = [digitalocean_droplet.mongo]
+}
