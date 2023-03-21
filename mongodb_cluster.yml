@@ -1,0 +1,74 @@
+---
+- name: Install and configure MongoDB on all nodes
+  hosts: mongodb
+  become: true
+  pre_tasks:
+    - name: yum | Install some useful packages
+      ansible.builtin.yum:
+        name:
+          - bash-completion
+          - python3-pymongo
+    - name: selinux | Disable SELlinux for now
+      ansible.posix.selinux:
+        state: permissive
+        policy: targeted
+  roles:
+#    - community.mongodb.mongodb_linux
+#    - community.mongodb.mongodb_selinux
+    - community.mongodb.mongodb_repository
+    - community.mongodb.mongodb_install
+#    - community.mongodb.mongodb_mongod
+#  post_tasks:
+#    - name: start mongodb service
+#      ansible.builtin.service:
+#        name: mongod
+#        state: started
+#        enabled: yes
+#
+#- name: Configure MongoDB replica set
+#  hosts: mongodb[0]
+#  become: true
+##  tasks:
+##   - name: Initiate replica set
+##     community.mongodb.mongodb_replicaset:
+##       replica_set: rs0
+##       members: "{{ groups['mongodb'] }}"
+#  vars:
+#    replica_set_name: rs0
+#    nodes: "{{ groups['mongodb'] }}"
+#  tasks:
+#    - name: Initialize Replica Set
+#      shell: |
+#        /usr/bin/mongosh --eval '
+#          rs.initiate({
+#            _id: "{{ replica_set_name }}",
+#            members: [
+#              {% for node in nodes %}
+#                { _id: {{ loop.index0 }}, host: "{{ node }}" },
+#                {% endfor %}
+#            ]
+#          })
+#        '
+#      args:
+#        executable: /bin/bash
+#      register: init_result
+#
+#    - name: Wait for Replica Set Initialization
+#      shell: |
+#        mongo --eval '
+#          rs.status().ok && rs.isMaster().ismaster
+#        '
+#      args:
+#        executable: /bin/bash
+#      register: wait_result
+#      until: wait_result.stdout == "true"
+#      retries: 30
+#      delay: 10
+#
+#    - name: Print Replica Set Status
+#      shell: |
+#        mongo --eval '
+#          rs.status()
+#        '
+#      args:
+#        executable: /bin/bash

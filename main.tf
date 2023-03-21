@@ -41,7 +41,7 @@ output "mongo_ips" {
 
 resource "local_file" "ansible_inventory" {
   content = <<-EOT
-    [droplets]
+    [mongodb]
     %{ for droplet in digitalocean_droplet.mongo.* ~}
     ${droplet.name} ansible_host=${droplet.ipv4_address} ansible_user=root ansible_ssh_private_key_file=/root/.ssh/id_rsa
     %{ endfor ~}
