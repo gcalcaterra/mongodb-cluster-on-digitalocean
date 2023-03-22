@@ -1,0 +1,35 @@
+name: 'Terraform'
+
+on:
+  push:
+    branches:
+      - main # Replace with your default branch name if different
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+#        with:
+#          terraform_version: 1.0.0 # Replace with your desired Terraform version
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve\
+        env:
+          TF_VAR_do_token: ${{ secrets.DO_TOKEN }}
+          TF_VAR_ssh_key_fingerprint: ${{ vars.SSH_KEY_FINGERPRINT }}
