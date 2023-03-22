@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main # Replace with your default branch name if different
+  workflow_dispatch:
 
 jobs:
   terraform:
