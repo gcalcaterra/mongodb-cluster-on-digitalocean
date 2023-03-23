@@ -12,6 +12,7 @@
           - vim
           - mlocate
           - python3-pip
+      tags: packages
 
     #https://checkmk.com/werk/14835
     #module mongodb_replicaset gives 'Unknown option directConnection' error with pymongo 3.7.0 (from yum).
@@ -19,17 +20,19 @@
       ansible.builtin.pip:
         name: pymongo
         state: present
+      tags: packages
 
-    - name: selinux | Disable SELlinux for now
-      ansible.posix.selinux:
-        state: permissive
-        policy: targeted
+#    - name: selinux | Disable SELlinux for now
+#      ansible.posix.selinux:
+#        state: permissive
+#        policy: targeted
 
     - name: Add MongoDB nodes to /etc/hosts
       lineinfile:
         path: /etc/hosts
         line: "{{ hostvars[item].ansible_host }} {{ item }}"
       loop: "{{ groups['mongodb'] }}"
+      tags: prerequisites
 
   roles:
     - role: community.mongodb.mongodb_repository
@@ -37,6 +40,9 @@
   
     - role: community.mongodb.mongodb_linux
       tags: os_tuning
+
+    - role: community.mongodb.mongodb_selinux
+      tags: security
   
     - role: community.mongodb.mongodb_install
       tags: packages
@@ -54,11 +60,12 @@
 - name: Configure mongod service for replication
   hosts: mongodb
   become: true
+  vars:
+    mongodb_admin_password: "MongoDBChangeMe"
   roles:
 
   tasks:
   - name: replica_set | Initialize MongoDB replica set
-    tags: replicaset
     any_errors_fatal: true
     community.mongodb.mongodb_replicaset:
       replica_set: "rs0"
@@ -66,3 +73,27 @@
       arbiter_at_index: 2
       debug: true
     when: groups.mongodb.index(inventory_hostname) == 0
+    tags: replicaset
+
+  - name: Ensure replicaset has reached a converged state
+    community.mongodb.mongodb_status:
+      replica_set: "rs0"
+      poll: 3
+      ssl_cert_reqs: "CERT_OPTIONAL"
+      login_user: admin
+      login_password: "{{ mongodb_admin_password }}" 
+#    when: repl.changed == True
+    when: groups.mongodb.index(inventory_hostname) == 0
+    tags: replicaset
+
+  - name: Import mongodb_auth role
+    include_role:
+      name: community.mongodb.mongodb_auth
+    vars:
+      mongodb_admin_pwd: "{{ mongodb_admin_password }}"
+      mongodb_force_update_password: yes #Uncomment when looking to change an already created user password #apparently this is not working
+    when: groups.mongodb.index(inventory_hostname) == 0
+    tags:
+      - users
+      - security
+      
