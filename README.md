@@ -122,6 +122,7 @@ To use this project for production, here is a list of some other suggestion to a
 - Add a volume (disk) to the droplets, in that way it's possible for Terraform (immutable infrastructure) to destroy only the droplets without the data, that can be useful for an upgrade for example.
 - Enable monitoring and if possible a tool to consume and analyze logs.
 - Create and test a backup policy for the MongoDB (SnapShooter is one that have integration with DO).
+- Always a good idea to have more than one environment, and have a CICD workflow for deploying changes.
 - There are some docs that would be a good read from the official Docs to check what can be added: [Production Notes](https://www.mongodb.com/docs/manual/administration/production-notes/)(this one is mostly implemented with the Ansible role community.mongodb.mongodb_linux that is already applied in this project), [Operations Checklist](https://www.mongodb.com/docs/manual/administration/production-checklist-operations/) and [Development Checklist](https://www.mongodb.com/docs/manual/administration/production-checklist-development/).
 
 
@@ -141,6 +142,9 @@ Contributing
 ------------
 Contributions are welcome!
 
+Author
+------
+* **Gustavo Calcaterra** - *Initial work* - [GitHub Profile](https://github.com/gcalcaterra)
 
 License
 -------
