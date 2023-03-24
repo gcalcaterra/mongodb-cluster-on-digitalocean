@@ -34,16 +34,20 @@ variable "ssh_key_fingerprint" {
   description = "SSH key fingerprint for the droplets"
 }
 
-output "mongo_ips" {
+output "mongo_public_ips" {
   value = digitalocean_droplet.mongo.*.ipv4_address
 }
 
+
+output "mongo_private_ips" {
+  value = digitalocean_droplet.mongo.*.ipv4_address_private
+}
 
 resource "local_file" "ansible_inventory" {
   content = <<-EOT
     [mongodb]
     %{ for droplet in digitalocean_droplet.mongo.* ~}
-    ${droplet.name} ansible_host=${droplet.ipv4_address} ansible_user=root ansible_ssh_private_key_file=/root/.ssh/id_rsa
+    ${droplet.name} ansible_host=${droplet.ipv4_address} private_ip=${droplet.ipv4_address_private} ansible_user=root ansible_ssh_private_key_file=/root/.ssh/id_rsa
     %{ endfor ~}
   EOT
 

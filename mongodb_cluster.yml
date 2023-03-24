@@ -30,7 +30,7 @@
     - name: Add MongoDB nodes to /etc/hosts
       lineinfile:
         path: /etc/hosts
-        line: "{{ hostvars[item].ansible_host }} {{ item }}"
+        line: "{{ hostvars[item].private_ip }} {{ item }}"
       loop: "{{ groups['mongodb'] }}"
       tags: prerequisites
 
@@ -48,6 +48,8 @@
       tags: packages
 
     - role: community.mongodb.mongodb_mongod
+      vars:
+        bind_ip: "127.0.0.1,{{ private_ip }}"
       tags: [config, replicaset]
 
 #  tasks:
